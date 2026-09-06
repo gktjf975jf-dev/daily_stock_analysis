@@ -97,6 +97,10 @@ class LLMResponse:
 # Models that auto-return reasoning_content; do NOT send extra_body (may cause 400).
 _AUTO_THINKING_MODELS: List[str] = ["deepseek-reasoner", "deepseek-r1", "qwq"]
 
+# Hybrid models that think by default; explicitly disable so message.content is
+# populated (reasoning can otherwise exhaust max_tokens and leave content empty).
+_THINKING_DISABLED_MODELS: List[str] = ["deepseek-v4"]
+
 # Models that need explicit opt-in via extra_body; payload decoupled from model name.
 _OPT_IN_THINKING_MODELS: Dict[str, dict] = {
     "deepseek-chat": {"thinking": {"type": "enabled"}},
@@ -293,6 +297,8 @@ def get_thinking_extra_body(model: str) -> Optional[dict]:
     """
     if _model_matches(model, _AUTO_THINKING_MODELS):
         return None
+    if _model_matches(model, _THINKING_DISABLED_MODELS):
+        return {"thinking": {"type": "disabled"}}
     return _get_opt_in_payload(model, _OPT_IN_THINKING_MODELS)
 
 
